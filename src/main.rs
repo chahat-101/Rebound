@@ -1,53 +1,66 @@
 use winit::{
-    event::{Event,WindowEvent},
-    event_loop::{ControlFlow,EventLoop,ActiveEventLoop},
-    window::{Window,WindowId},
-    application::ApplicationHandler,
-    
+
+    application::ApplicationHandler, 
+    event::{self, Event, WindowEvent}, 
+    event_loop::{self, ActiveEventLoop, ControlFlow, EventLoop}, 
+    window::{self, Window, WindowId}
 };
-#[derive(Default)]
-struct App{
-    window:Option<Window>,
 
-}
+use pixels::{Pixels,SurfaceTexture};
 
 
-impl ApplicationHandler for App{
 
-    fn resumed(&mut self, event_loop: & ActiveEventLoop) {
-        
-        let win = event_loop.create_window(Window::default_attributes())
-                            .expect("failed to create window");
-        
-        self.window = Some(win);
-        
-    }
-
-    fn window_event(
-            &mut self,
-            event_loop: &ActiveEventLoop,
-            window_id: WindowId,
-            event: WindowEvent,
-        ) {
-        
-            match event {
-            WindowEvent::CloseRequested => {
-                // drop the window (it closes) and exit the event loop
-                self.window = None;
-                event_loop.exit();
-            }
-            _ => {}
-        }
-    }
-}
-
-fn main() {
-
+fn main(){
     let event_loop = EventLoop::new().unwrap();
 
-    let mut app = App::default();
+   let window = event_loop.create_window(Window::default_attributes()).expect("failed to load window");
+
+    let size = window.inner_size();
+
+    let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
+
+    let mut pixels = Pixels::new(size.width, size.height, surface_texture).unwrap();
 
 
-    event_loop.run_app(&mut app).unwrap();
+    event_loop.run(|event,active_event_loop|{
+
+        match event{
+            Event::WindowEvent {event:WindowEvent::CloseRequested,
+                ..
+            } =>{
+                active_event_loop.exit();
+            },
+
+            Event::WindowEvent { 
+                event: WindowEvent::Resized(size),
+                ..
+            } => {
+                pixels.resize_surface(size.width, size.height);
+                pixels.resize_buffer(size.width, size.height);
+                window.request_redraw();
+            },
+
+            Event::WindowEvent { 
+                event:WindowEvent::RedrawRequested,
+                ..
+            } => {
+
+                let frame = pixels.frame_mut();
+
+                for px in frame.chunks_exact_mut(4){
+                    px.copy_from_slice(&[255,255,255,255]);
+                }
+
+                pixels.render().unwrap();
+            },
+
+            _=> {},
+
+        }
+
+       
+
+    });
+
 
 }
