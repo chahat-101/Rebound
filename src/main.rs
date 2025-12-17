@@ -11,37 +11,44 @@ async fn main() {
         let window_height = screen_height();
         let room_size = 100.0;
         let thickness = 17.0;
+        let outer_size = room_size + thickness * 2.0;
         let start_x = (window_width - room_size) / 2.0;
         let start_y = (window_height - room_size) / 2.0;
-
+        let start_x = (window_width - outer_size) / 2.0;
+        let start_y = (window_height - outer_size) / 2.0;
         let top = Wall {
-            rect: Rect::new(start_x, start_y, room_size + thickness, thickness),
+            rect: Rect::new(start_x, start_y, outer_size, thickness),
         };
 
         let bottom = Wall {
             rect: Rect::new(
                 start_x,
-                start_y + room_size,
-                room_size + thickness,
+                start_y + thickness + room_size,
+                outer_size,
                 thickness,
             ),
         };
 
         let left = Wall {
-            rect: Rect::new(start_x, start_y, thickness, room_size + thickness),
+            rect: Rect::new(start_x, start_y, thickness, outer_size),
         };
 
         let right = Wall {
             rect: Rect::new(
-                start_x + room_size,
+                start_x + thickness + room_size,
                 start_y,
                 thickness,
-                room_size + thickness,
+                outer_size,
             ),
         };
         clear_background(BLACK);
 
-        draw_circle(150.0, 150.0, 15.0, WHITE);
+        draw_circle(
+            start_x + thickness + (room_size) / 2.0,
+            start_y + thickness + (room_size) / 2.0,
+            15.0,
+            WHITE,
+        );
 
         draw_rectangle(top.rect.x, top.rect.y, top.rect.w, top.rect.h, RED);
         draw_rectangle(
