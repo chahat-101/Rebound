@@ -4,6 +4,12 @@ struct Wall {
     rect: Rect,
 }
 
+struct Ball {
+    radius: f32,
+    velocity: Vec2,
+    position: Vec2,
+}
+
 #[macroquad::main("Walls")]
 async fn main() {
     loop {
