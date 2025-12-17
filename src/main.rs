@@ -6,28 +6,39 @@ struct Wall {
 
 #[macroquad::main("Walls")]
 async fn main() {
-    let room_x = 100.0;
-    let room_y = 100.0;
-    let room_size = 100.0;
-    let thickness = 17.0;
-
-    let top = Wall {
-        rect: Rect::new(room_x, room_y, room_size + thickness, thickness),
-    };
-
-    let bottom = Wall {
-        rect: Rect::new(room_x, room_y + room_size, room_size + thickness, thickness),
-    };
-
-    let left = Wall {
-        rect: Rect::new(room_x, room_y, thickness, room_size + thickness),
-    };
-
-    let right = Wall {
-        rect: Rect::new(room_x + room_size, room_y, thickness, room_size + thickness),
-    };
-
     loop {
+        let window_width = screen_width();
+        let window_height = screen_height();
+        let room_size = 100.0;
+        let thickness = 17.0;
+        let start_x = (window_width - room_size) / 2.0;
+        let start_y = (window_height - room_size) / 2.0;
+
+        let top = Wall {
+            rect: Rect::new(start_x, start_y, room_size + thickness, thickness),
+        };
+
+        let bottom = Wall {
+            rect: Rect::new(
+                start_x,
+                start_y + room_size,
+                room_size + thickness,
+                thickness,
+            ),
+        };
+
+        let left = Wall {
+            rect: Rect::new(start_x, start_y, thickness, room_size + thickness),
+        };
+
+        let right = Wall {
+            rect: Rect::new(
+                start_x + room_size,
+                start_y,
+                thickness,
+                room_size + thickness,
+            ),
+        };
         clear_background(BLACK);
 
         draw_circle(150.0, 150.0, 15.0, WHITE);
