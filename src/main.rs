@@ -12,6 +12,7 @@ struct Ball {
 
 #[macroquad::main("Walls")]
 async fn main() {
+    let x = 10;
     loop {
         let window_width = screen_width();
         let window_height = screen_height();
