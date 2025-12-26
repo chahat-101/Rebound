@@ -10,15 +10,40 @@ pub trait GameObject {
 }
 
 pub struct SpatialGrid {
-    cell_size: f32,
-    cells: HashMap<(i32, i32), Vec<usize>>,
+    pub cell_size: f32,
+    pub cells: HashMap<(i32, i32), Vec<usize>>,
 }
 
+pub struct Game {
+    walls: Vec<Wall>,
+    balls: Vec<Ball>,
+    grid: SpatialGrid,
+}
 
+impl SpatialGrid {
+    pub fn new(cell_size: f32) -> Self {
+        Self {
+            cell_size: cell_size,
+            cells: HashMap::new(),
+        }
+    }
+}
 
+impl Game {
+    pub fn new(cell_size: f32) -> Self {
+        Self {
+            walls: Vec::new(),
+            balls: Vec::new(),
+            grid: SpatialGrid::new(cell_size),
+        }
+    }
+}
 
+pub fn get_cell(x: f32, y: f32, spatial_grid: &SpatialGrid) -> (i32, i32) {
+    let cell_size = spatial_grid.cell_size;
 
-
+    ((x / cell_size) as i32, (y / cell_size) as i32)
+}
 
 pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
     let ball_centre = vec![ball.position.x, ball.position.y];
