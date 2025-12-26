@@ -1,79 +1,43 @@
 use macroquad::prelude::*;
 
-struct Wall {
-    rect: Rect,
-}
+mod balls;
+mod utils;
+mod walls; // or whatever you named the module with collision code
 
-struct Ball {
-    radius: f32,
-    velocity: Vec2,
-    position: Vec2,
-}
+use balls::Ball;
+use utils::SpatialGrid;
+use walls::Wall;
 
-#[macroquad::main("Walls")]
+use crate::utils::ball_rect_collision;
+
+#[macroquad::main("a")]
 async fn main() {
-    let x = 10;
+    let x = screen_width();
+    let mut ball = Ball {
+        position: vec2(x / 2.0, 0.0),
+        velocity: vec2(0.0, 100.0),
+        radius: 10.0,
+    };
+    let mut wall = Wall {
+        rect: Rect {
+            x: 100.0,
+            y: 300.0,
+            w: 350.0,
+            h: 150.0,
+        },
+        angle: 0.0,
+        velocity: Option::None,
+    };
+
     loop {
-        let window_width = screen_width();
-        let window_height = screen_height();
-        let room_size = 100.0;
-        let thickness = 17.0;
-        let outer_size = room_size + thickness * 2.0;
-        let start_x = (window_width - room_size) / 2.0;
-        let start_y = (window_height - room_size) / 2.0;
-        let start_x = (window_width - outer_size) / 2.0;
-        let start_y = (window_height - outer_size) / 2.0;
-        let top = Wall {
-            rect: Rect::new(start_x, start_y, outer_size, thickness),
-        };
-
-        let bottom = Wall {
-            rect: Rect::new(
-                start_x,
-                start_y + thickness + room_size,
-                outer_size,
-                thickness,
-            ),
-        };
-
-        let left = Wall {
-            rect: Rect::new(start_x, start_y, thickness, outer_size),
-        };
-
-        let right = Wall {
-            rect: Rect::new(
-                start_x + thickness + room_size,
-                start_y,
-                thickness,
-                outer_size,
-            ),
-        };
+        let dt = get_frame_time();
         clear_background(BLACK);
-
-        draw_circle(
-            start_x + thickness + (room_size) / 2.0,
-            start_y + thickness + (room_size) / 2.0,
-            15.0,
-            WHITE,
-        );
-
-        draw_rectangle(top.rect.x, top.rect.y, top.rect.w, top.rect.h, RED);
-        draw_rectangle(
-            bottom.rect.x,
-            bottom.rect.y,
-            bottom.rect.w,
-            bottom.rect.h,
-            WHITE,
-        );
-        draw_rectangle(left.rect.x, left.rect.y, left.rect.w, left.rect.h, BROWN);
-        draw_rectangle(
-            right.rect.x,
-            right.rect.y,
-            right.rect.w,
-            right.rect.h,
-            GREEN,
-        );
-
+        if !ball_rect_collision(&ball, &wall, dt) {
+            draw_circle(ball.position.x, ball.position.y, ball.radius, ORANGE);
+            ball.update(dt);
+            draw_rectangle(wall.rect.x, wall.rect.y, wall.rect.w, wall.rect.h, WHITE);
+        }
+        println!("{},{}", ball.position.x, ball.position.y);
         next_frame().await;
     }
 }
