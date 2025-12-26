@@ -26,7 +26,7 @@ async fn main() {
             h: 150.0,
         },
         angle: 0.0,
-        velocity: Option::None,
+        velocity: Some(vec2(10.0, 200.0)),
     };
 
     loop {
@@ -35,7 +35,7 @@ async fn main() {
         ball.draw();
         ball.update(dt);
         ball_rect_collision(&mut ball, &wall);
-
+        wall.update(vec2(-10.0, -50.0), dt);
         wall.draw();
         next_frame().await;
     }

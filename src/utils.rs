@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use macroquad::{color::Color, math::Vec2, telemetry::frame};
+use macroquad::{color::Color, math::Vec2};
 
 use crate::{balls::Ball, walls::Wall};
 
@@ -14,41 +14,11 @@ pub struct SpatialGrid {
     cells: HashMap<(i32, i32), Vec<usize>>,
 }
 
-impl SpatialGrid {
-    fn new(cell_size: f32) -> Self {
-        Self {
-            cell_size,
-            cells: HashMap::new(),
-        }
-    }
 
-    fn world_to_cell(&self, x: f32, y: f32) -> (i32, i32) {
-        ((x / self.cell_size) as i32, (y / self.cell_size) as i32)
-    }
 
-    fn insert_wall(&mut self, wall_index: usize, wall: &Wall) {
-        let min_cell = self.world_to_cell(wall.rect.x, wall.rect.y);
-        let max_cell = self.world_to_cell(wall.rect.x + wall.rect.w, wall.rect.y + wall.rect.h);
 
-        for cx in min_cell.0..=min_cell.0 {
-            for cy in min_cell.1..=min_cell.1 {
-                self.cells
-                    .entry((cx, cy))
-                    .or_insert_with(Vec::new)
-                    .push(wall_index);
-            }
-        }
-    }
 
-    fn get_cell(&self, x: f32, y: f32) -> (i32, i32) {
-        ((x / self.cell_size) as i32, (y / self.cell_size) as i32)
-    }
 
-    fn query(&self, ball: &Ball) -> Vec<usize> {
-        let cell = self.get_cell(ball.position.x, ball.position.y);
-        self.cells.get(&cell).cloned().unwrap_or_default()
-    }
-}
 
 pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
     let ball_centre = vec![ball.position.x, ball.position.y];
