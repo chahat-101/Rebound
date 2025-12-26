@@ -10,4 +10,7 @@ impl Ball {
     pub fn update(&mut self, dt: f32) {
         self.position += self.velocity * dt;
     }
+    pub fn draw(&self) {
+        draw_circle(self.position.x, self.position.y, self.radius, WHITE);
+    }
 }

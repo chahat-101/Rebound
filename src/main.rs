@@ -32,12 +32,11 @@ async fn main() {
     loop {
         let dt = get_frame_time();
         clear_background(BLACK);
-        if !ball_rect_collision(&ball, &wall, dt) {
-            draw_circle(ball.position.x, ball.position.y, ball.radius, ORANGE);
-            ball.update(dt);
-            draw_rectangle(wall.rect.x, wall.rect.y, wall.rect.w, wall.rect.h, WHITE);
-        }
-        println!("{},{}", ball.position.x, ball.position.y);
+        ball.draw();
+        ball.update(dt);
+        ball_rect_collision(&mut ball, &wall);
+
+        wall.draw();
         next_frame().await;
     }
 }

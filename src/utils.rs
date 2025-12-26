@@ -50,83 +50,40 @@ impl SpatialGrid {
     }
 }
 
-pub fn ball_rect_collision(ball: &Ball, wall: &Wall, dt: f32) -> bool {
+pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
     let ball_centre = vec![ball.position.x, ball.position.y];
+    let ball_radius = ball.radius;
 
-    let wall_centre = vec![
-        wall.rect.x + wall.rect.w / 2.0,
-        wall.rect.y + wall.rect.h / 2.0,
-    ];
+    let closest_x = ball_centre[0].clamp(wall.rect.x, wall.rect.x + wall.rect.w);
+    let closest_y = ball_centre[1].clamp(wall.rect.y, wall.rect.y + wall.rect.h);
 
-    let wall_x_range = vec![
-        wall_centre[0] - wall.rect.w / 2.0,
-        wall_centre[0] + wall.rect.w / 2.0,
-    ];
+    let dx = ball_centre[0] - closest_x;
+    let dy = ball_centre[1] - closest_y;
 
-    let wall_y_range = vec![
-        wall_centre[1] - wall.rect.h / 2.0,
-        wall_centre[1] + wall.rect.h / 2.0,
-    ];
+    let dist_squared = dx * dx + dy * dy;
 
-    let ball_velocity = ball.velocity;
+    let radius_squared = ball_radius * ball_radius;
 
-    let ball_slope = ball_velocity.x / ball_velocity.y;
-    let ball_intrcpt = get_y_intercept(ball_slope, ball.position.x, ball.position.y);
+    if dist_squared < radius_squared {
+        let dist = dist_squared.sqrt();
 
-    let wall_slope = wall.angle.tan();
-    let wall_intrcpt = get_y_intercept(wall_slope, wall.rect.x, wall.rect.y);
+        // Calculate penetration depth
+        let penetration_depth = ball_radius - dist;
 
-    let wall_unit_vector = normal_unit_vector(wall_slope, -1.0);
+        // Calculate normalized collision normal
+        let normal_x = if dist == 0.0 { 1.0 } else { dx / dist }; // Avoid division by zero
+        let normal_y = if dist == 0.0 { 0.0 } else { dy / dist }; // Avoid division by zero
 
-    if wall_slope != ball_slope {
-        if dot_product(vec![ball_velocity.x, ball_velocity.y], wall_unit_vector) < 0.0 {
-            let intersection_point =
-                get_intersection_point(ball_slope, ball_intrcpt, wall_slope, wall_intrcpt);
+        // Positional correction: move ball out of the wall
+        ball.position.x += normal_x * penetration_depth;
+        ball.position.y += normal_y * penetration_depth;
 
-            let current_distance = get_distace(
-                ball.position.x,
-                ball.position.y,
-                intersection_point[0],
-                intersection_point[1],
-            );
+        // Velocity reflection
+        let vel_dot_n = ball.velocity.x * normal_x + ball.velocity.y * normal_y;
 
-            let frame_dist = get_distace(0.0, 0.0, (ball_velocity * dt).x, (ball_velocity * dt).y);
-            if frame_dist > current_distance {
-                return true;
-            }
+        if vel_dot_n < 0.0 {
+            ball.velocity.x -= (2.0) * vel_dot_n * normal_x;
+            ball.velocity.y -= (2.0) * vel_dot_n * normal_y;
         }
     }
-    false
-}
-
-fn get_y_intercept(slope: f32, x: f32, y: f32) -> f32 {
-    y - slope * x
-}
-
-fn normal_unit_vector(a: f32, b: f32) -> Vec<f32> {
-    let denominator = (a * a + b * b).powf(0.5);
-
-    vec![a / denominator, b / denominator]
-}
-
-fn dot_product(a: Vec<f32>, b: Vec<f32>) -> f32 {
-    let dot: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-
-    dot
-}
-
-fn get_intersection_point(slope1: f32, intercept1: f32, slope2: f32, intercept2: f32) -> Vec<f32> {
-    let x = (intercept2 - intercept1) / (slope1 - slope2);
-    let y = slope1 * x + intercept1;
-
-    vec![x, y]
-}
-
-fn get_distace(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
-    let x_diff = x2 - x1;
-    let y_dist = y2 - y1;
-
-    let dist = x_diff.powi(2) + y_dist.powi(2);
-
-    dist.sqrt()
 }
