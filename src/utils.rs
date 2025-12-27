@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{clone, collections::HashMap};
 
 use macroquad::{color::Color, math::Vec2};
 
@@ -11,13 +11,18 @@ pub trait GameObject {
 
 pub struct SpatialGrid {
     pub cell_size: f32,
-    pub cells: HashMap<(i32, i32), Vec<usize>>,
+    pub cells: HashMap<(i32, i32), Vec<Entity>>,
 }
 
 pub struct Game {
     walls: Vec<Wall>,
     balls: Vec<Ball>,
     grid: SpatialGrid,
+}
+#[derive(Clone, Copy, PartialEq)]
+pub enum Entity {
+    Wall(usize),
+    Ball(usize),
 }
 
 impl SpatialGrid {
@@ -27,6 +32,48 @@ impl SpatialGrid {
             cells: HashMap::new(),
         }
     }
+    pub fn get_cell_key(&self, position: Vec2) -> (i32, i32) {
+        let cell_size = self.cell_size;
+        (
+            (position.x / cell_size) as i32,
+            (position.y / cell_size) as i32,
+        )
+    }
+
+    pub fn insert_entity(&mut self, position: Vec2, entity: Entity) {
+        let key = self.get_cell_key(position);
+    }
+
+    pub fn remove(&self, position: Vec2, entity: Entity) {}
+
+    pub fn update(&mut self, old_position: Vec2, new_position: Vec2, entity: Entity) {
+        let old_key = self.get_cell_key(old_position);
+        let new_key = self.get_cell_key(new_position);
+
+        if new_key != old_key {
+            if let Some(cell) = self.cells.get_mut(&old_key) {
+                self.remove(old_position, entity);
+                self.insert_entity(new_position, entity);
+            }
+        }
+    }
+
+    pub fn clear(&mut self){
+        self.cells.clear();
+    }
+
+    pub fn query_result(&self,position: Vec2,radius:f32) -> Vec<Entity> { // this result all the objects in the specified radius
+        let mut result = Vec::new();
+        let cells_to_check = (radius/self.cell_size).ceil();
+        let centre = self.get_cell_key(position);
+        for dx in -cells_to_check..=cells_to_check{
+            for dy in -cells_to_check..=cells_to_check{
+                let key = (centre[0]+dx,centre[1]+dy);
+                if let Some(cell) = self.cells.get(&key){
+                    result.extend(cell);
+                }
+            }
+        }
 }
 
 impl Game {
@@ -37,12 +84,6 @@ impl Game {
             grid: SpatialGrid::new(cell_size),
         }
     }
-}
-
-pub fn get_cell(x: f32, y: f32, spatial_grid: &SpatialGrid) -> (i32, i32) {
-    let cell_size = spatial_grid.cell_size;
-
-    ((x / cell_size) as i32, (y / cell_size) as i32)
 }
 
 pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
