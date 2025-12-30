@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 
+#[derive(Clone, Copy)]
 pub struct Wall {
     pub rect: Rect,
     pub angle: f32,
@@ -7,6 +8,14 @@ pub struct Wall {
 }
 
 impl Wall {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, angle: f32, velocity: Option<Vec2>) -> Self {
+        Self {
+            rect: Rect::new(x, y, w, h),
+            angle: angle,
+            velocity: velocity,
+        }
+    }
+
     pub fn update(&mut self, acceleration: Vec2, dt: f32) {
         if let Some(mut v) = self.velocity {
             let old_angle = v.y.atan2(v.x);
@@ -23,17 +32,23 @@ impl Wall {
     }
 
     pub fn draw(&self) {
-    draw_rectangle_ex(
-        self.rect.x + self.rect.w / 2.0,
-        self.rect.y + self.rect.h / 2.0,
-        self.rect.w,
-        self.rect.h,
-        DrawRectangleParams {
-            rotation: self.angle,
-            offset: vec2(0.5, 0.5), // rotate around center
-            color: WHITE,
+        draw_rectangle_ex(
+            self.rect.x + self.rect.w / 2.0,
+            self.rect.y + self.rect.h / 2.0,
+            self.rect.w,
+            self.rect.h,
+            DrawRectangleParams {
+                rotation: self.angle,
+                offset: vec2(0.5, 0.5), // rotate around center
+                color: WHITE,
             },
         );
     }
+}
+use crate::utils::HasBounds;
 
+impl HasBounds for Wall {
+    fn bounds(&self) -> Rect {
+        self.rect
+    }
 }

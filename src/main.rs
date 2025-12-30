@@ -8,6 +8,9 @@ use balls::Ball;
 use utils::SpatialGrid;
 use walls::Wall;
 
+mod game;
+use game::Game;
+
 use crate::utils::ball_rect_collision;
 
 #[macroquad::main("a")]

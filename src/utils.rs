@@ -1,8 +1,14 @@
+use macroquad::prelude::*;
+use macroquad::{color::Color, math::Vec2};
 use std::{clone, collections::HashMap};
 
-use macroquad::{color::Color, math::Vec2};
-
 use crate::{balls::Ball, walls::Wall};
+
+use crate::game::Game;
+
+pub trait HasBounds {
+    fn bounds(&self) -> Rect;
+}
 
 pub trait GameObject {
     fn draw(&self, color: Color);
@@ -14,11 +20,6 @@ pub struct SpatialGrid {
     pub cells: HashMap<(i32, i32), Vec<Entity>>,
 }
 
-pub struct Game {
-    walls: Vec<Wall>,
-    balls: Vec<Ball>,
-    grid: SpatialGrid,
-}
 #[derive(Clone, Copy, PartialEq)]
 pub enum Entity {
     Wall(usize),
@@ -35,16 +36,27 @@ impl SpatialGrid {
     pub fn get_cell_key(&self, position: Vec2) -> (i32, i32) {
         let cell_size = self.cell_size;
         (
-            (position.x / cell_size) as i32,
-            (position.y / cell_size) as i32,
+            (position.x / self.cell_size).floor() as i32,
+            (position.y / self.cell_size).floor() as i32,
         )
     }
 
     pub fn insert_entity(&mut self, position: Vec2, entity: Entity) {
         let key = self.get_cell_key(position);
+
+        self.cells.entry(key).or_insert(Vec::new()).push(entity);
     }
 
-    pub fn remove(&self, position: Vec2, entity: Entity) {}
+    pub fn remove(&mut self, position: Vec2, entity: Entity) {
+        let key = (
+            ((position.x) / self.cell_size) as i32,
+            ((position.y) / self.cell_size) as i32,
+        );
+
+        if let Some(cell) = self.cells.get_mut(&key) {
+            cell.retain(|e| e != &entity);
+        };
+    }
 
     pub fn update(&mut self, old_position: Vec2, new_position: Vec2, entity: Entity) {
         let old_key = self.get_cell_key(old_position);
@@ -58,31 +70,27 @@ impl SpatialGrid {
         }
     }
 
-    pub fn clear(&mut self){
+    pub fn clear(&mut self) {
         self.cells.clear();
     }
 
-    pub fn query_result(&self,position: Vec2,radius:f32) -> Vec<Entity> { // this result all the objects in the specified radius
+    pub fn query_result(&self, position: Vec2, radius: f32) -> Vec<Entity> {
+        // this result all the objects in the specified radius
         let mut result = Vec::new();
-        let cells_to_check = (radius/self.cell_size).ceil();
+
+        let cells_to_check = (radius / self.cell_size).ceil() as i32;
         let centre = self.get_cell_key(position);
-        for dx in -cells_to_check..=cells_to_check{
-            for dy in -cells_to_check..=cells_to_check{
-                let key = (centre[0]+dx,centre[1]+dy);
-                if let Some(cell) = self.cells.get(&key){
+
+        for dx in -cells_to_check..=cells_to_check {
+            for dy in -cells_to_check..=cells_to_check {
+                let key = (centre.0 + dx, centre.1 + dy);
+                if let Some(cell) = self.cells.get(&key) {
                     result.extend(cell);
                 }
             }
         }
-}
 
-impl Game {
-    pub fn new(cell_size: f32) -> Self {
-        Self {
-            walls: Vec::new(),
-            balls: Vec::new(),
-            grid: SpatialGrid::new(cell_size),
-        }
+        result
     }
 }
 
