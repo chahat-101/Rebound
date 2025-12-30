@@ -1,6 +1,7 @@
-use macroquad::prelude::*;
+use std::backtrace;
 
 use crate::utils::HasBounds;
+use macroquad::prelude::*;
 
 pub struct Ball {
     pub position: Vec2,

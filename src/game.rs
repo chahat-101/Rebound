@@ -1,5 +1,5 @@
 use crate::balls::Ball;
-use crate::utils::{Entity, SpatialGrid};
+use crate::utils::{ball_rect_collision, Entity, HasBounds, SpatialGrid};
 use crate::walls::Wall;
 use macroquad::prelude::*;
 
@@ -19,12 +19,33 @@ impl Game {
     }
 
     pub fn update(&mut self, dt: f32) {
-        for (i, ball) in self.balls.iter_mut().enumerate() {
-            let old_pos = ball.position;
+        // move balls and update spatial grid
+        for i in 0..self.balls.len() {
+            let ball = &mut self.balls[i];
+            let old_bounds = ball.bounds();
             ball.update(dt);
-            let new_pos = ball.position;
+            let new_bounds = ball.bounds();
 
-            self.grid.update(old_pos, new_pos, Entity::Ball(i));
+            self.grid
+                .update_bounds(old_bounds, new_bounds, Entity::Ball(i));
+        }
+
+        // check collisions
+        for i in 0..self.balls.len() {
+            let ball_pos = self.balls[i].position;
+            let ball_radius = self.balls[i].radius;
+
+            let near_entities = self.grid.query_result(ball_pos, ball_radius);
+
+            for entity in near_entities {
+                if let Entity::Wall(wall_idx) = entity {
+                    if wall_idx < self.walls.len() {
+                        let wall = &self.walls[wall_idx];
+                        let ball = &mut self.balls[i];
+                        ball_rect_collision(ball, wall);
+                    }
+                }
+            }
         }
     }
 
@@ -50,8 +71,19 @@ impl Game {
         let wall = Wall::new(x, y, w, h, angle, velocity);
 
         self.walls.push(wall);
-        let index = self.walls.len();
+        let wall_index = self.walls.len() - 1;
+        let bounds = wall.bounds();
 
-        self.grid.insert_entity(position, entity);
+        self.grid.insert_bounds(bounds, Entity::Wall(wall_index));
+    }
+
+    pub fn spawn_ball(&mut self, centre: (f32, f32), velocity: Vec2, radius: f32) {
+        let ball = Ball::new(vec2(centre.0, centre.1), velocity, radius);
+
+        let bounds = ball.bounds();
+        self.balls.push(ball);
+        let index = self.balls.len() - 1;
+
+        self.grid.insert_bounds(bounds, Entity::Ball(index));
     }
 }
