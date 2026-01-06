@@ -11,45 +11,32 @@ use walls::Wall;
 mod game;
 use game::Game;
 
+mod rotatingroom;
+
 use crate::utils::ball_rect_collision;
+
+use crate::rotatingroom::RotatingRoom;
 
 #[macroquad::main("a")]
 async fn main() {
     let mut game = Game::new(10.0);
-    let thickness = 10.0;
-    game.spawn_wall(0.0, 0.0, screen_width(), thickness, 0.0, None); // top
-    game.spawn_wall(
-        0.0,
-        screen_height() - thickness,
-        screen_width(),
-        thickness,
-        0.0,
-        None,
-    ); // bottom
-    game.spawn_wall(0.0, 0.0, thickness, screen_height(), 0.0, None); // left
-    game.spawn_wall(
-        screen_width() - thickness,
-        0.0,
-        thickness,
-        screen_height(),
-        0.0,
-        None,
+    let mut room = RotatingRoom::new(
+        &mut game,
+        vec2(400.0, 300.0),
+        200.0,
+        8,
+        100.0,
+        10.0,
+        1.0, // radians/sec
     );
-
-    for i in 0..1 {
-        let x = 100.0 + i as f32 * 50.0;
-        let y = 100.0;
-        game.spawn_ball((x, y), vec2(0.0, 100.0), 20.0);
-    }
-    let acc = vec2(0.0, 130.0);
     loop {
+        let dt = get_frame_time();
         clear_background(BLACK);
 
-        let dt = get_frame_time();
-        for ball in game.balls.iter_mut() {
-            ball.velocity += acc * dt;
-        }
+        room.update(&mut game, dt);
+
         game.update(dt);
+
         game.draw();
 
         next_frame().await;
