@@ -25,13 +25,15 @@ async fn main() {
         vec2(400.0, 300.0),
         200.0,
         8,
-        100.0,
         10.0,
         1.0, // radians/sec
     );
+    let background = load_texture("bg/bg.png").await.unwrap();
     loop {
         let dt = get_frame_time();
-        clear_background(BLACK);
+        clear_background(WHITE);
+
+        draw_texture(&background, 0.0, 0.0, WHITE);
 
         room.update(&mut game, dt);
 

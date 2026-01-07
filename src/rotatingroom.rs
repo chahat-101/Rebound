@@ -21,12 +21,13 @@ impl RotatingRoom {
         centre: Vec2,
         radius: f32,
         n: usize,
-        wall_length: f32,
+        //wall_length: f32, i am thinking of droping this for now
         wall_thickness: f32,
         angular_speed: f32,
     ) -> Self {
         let mut wall_indices = Vec::with_capacity(n);
-
+        let theta = std::f32::consts::TAU / n as f32;
+        let wall_length = 2.0 * radius * (theta / 2.0).tan();
         for i in 0..n {
             let base_angle = i as f32 * std::f32::consts::TAU / n as f32;
 

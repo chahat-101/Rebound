@@ -1,5 +1,5 @@
 use crate::balls::Ball;
-use crate::utils::{ball_rect_collision, Entity, HasBounds, SpatialGrid};
+use crate::utils::{Entity, HasBounds, SpatialGrid, ball_rect_collision};
 use crate::walls::Wall;
 use macroquad::prelude::*;
 
