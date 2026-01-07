@@ -77,8 +77,8 @@ impl Game {
         self.grid.insert_bounds(bounds, Entity::Wall(wall_index));
     }
 
-    pub fn spawn_ball(&mut self, centre: (f32, f32), velocity: Vec2, radius: f32) {
-        let ball = Ball::new(vec2(centre.0, centre.1), velocity, radius);
+    pub fn spawn_ball(&mut self, centre: (f32, f32), velocity: Vec2, radius: f32, gravity: bool) {
+        let ball = Ball::new(vec2(centre.0, centre.1), velocity, radius, gravity);
 
         let bounds = ball.bounds();
         self.balls.push(ball);

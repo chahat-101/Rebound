@@ -49,6 +49,36 @@ use crate::utils::HasBounds;
 
 impl HasBounds for Wall {
     fn bounds(&self) -> Rect {
-        self.rect
+        let angle = self.angle;
+        let rect = self.rect;
+        let center = rect.point() + rect.size() / 2.0;
+
+        let corners = [
+            rect.point(),
+            rect.point() + vec2(rect.w, 0.0),
+            rect.point() + vec2(0.0, rect.h),
+            rect.point() + rect.size(),
+        ];
+
+        let mut min_x = f32::MAX;
+        let mut min_y = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut max_y = f32::MIN;
+
+        for corner in &corners {
+            let translated = *corner - center;
+            let rotated = vec2(
+                translated.x * angle.cos() - translated.y * angle.sin(),
+                translated.x * angle.sin() + translated.y * angle.cos(),
+            );
+            let final_pos = rotated + center;
+
+            min_x = min_x.min(final_pos.x);
+            min_y = min_y.min(final_pos.y);
+            max_x = max_x.max(final_pos.x);
+            max_y = max_y.max(final_pos.y);
+        }
+
+        Rect::new(min_x, min_y, max_x - min_x, max_y - min_y)
     }
 }

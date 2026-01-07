@@ -28,12 +28,29 @@ async fn main() {
         10.0,
         1.0, // radians/sec
     );
+    game.spawn_ball((room.centre.x, room.centre.y), vec2(0.0, 100.0), 10.0, true);
+    game.spawn_wall(
+        room.centre.x - 10.0,
+        room.centre.y + 10.0,
+        30.0,
+        15.0,
+        90.0,
+        Option::None,
+    );
     let background = load_texture("bg/bg.png").await.unwrap();
     loop {
         let dt = get_frame_time();
         clear_background(WHITE);
-
-        draw_texture(&background, 0.0, 0.0, WHITE);
+        draw_texture_ex(
+            &background,
+            0.0,
+            0.0,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(vec2(screen_width(), screen_height())),
+                ..Default::default()
+            },
+        );
 
         room.update(&mut game, dt);
 

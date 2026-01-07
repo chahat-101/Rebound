@@ -2,7 +2,7 @@ use macroquad::miniquad::gl::ERROR_INVALID_VERSION_ARB;
 use macroquad::prelude::*;
 use macroquad::{color::Color, math::Vec2};
 use std::{clone, collections::HashMap};
-
+pub const G: Vec2 = vec2(0.0, 500.0);
 use crate::{balls::Ball, walls::Wall};
 
 use crate::game::Game;
@@ -122,39 +122,54 @@ impl SpatialGrid {
 }
 
 pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
-    let ball_centre = vec![ball.position.x, ball.position.y];
-    let ball_radius = ball.radius;
+    let angle = wall.angle;
+    let rect_center = wall.rect.point() + wall.rect.size() / 2.0;
 
-    let closest_x = ball_centre[0].clamp(wall.rect.x, wall.rect.x + wall.rect.w);
-    let closest_y = ball_centre[1].clamp(wall.rect.y, wall.rect.y + wall.rect.h);
+    let translated_ball_center = ball.position - rect_center;
+    let rotated_ball_center = vec2(
+        translated_ball_center.x * angle.cos() + translated_ball_center.y * angle.sin(),
+        -translated_ball_center.x * angle.sin() + translated_ball_center.y * angle.cos(),
+    );
 
-    let dx = ball_centre[0] - closest_x;
-    let dy = ball_centre[1] - closest_y;
+    let half_extents = wall.rect.size() / 2.0;
+    let closest_point_local = rotated_ball_center.clamp(-half_extents, half_extents);
 
-    let dist_squared = dx * dx + dy * dy;
+    let normal_local;
+    if (rotated_ball_center.x).abs() > half_extents.x
+        || (rotated_ball_center.y).abs() > half_extents.y
+    {
+        normal_local = (rotated_ball_center - closest_point_local).normalize();
+    } else {
+        let dx = closest_point_local.x - rotated_ball_center.x;
+        let dy = closest_point_local.y - rotated_ball_center.y;
 
-    let radius_squared = ball_radius * ball_radius;
+        if dx.abs() > dy.abs() {
+            normal_local = vec2(dx.signum(), 0.0);
+        } else {
+            normal_local = vec2(0.0, dy.signum());
+        }
+    }
 
-    if dist_squared < radius_squared {
-        let dist = dist_squared.sqrt();
+    let distance_sq = rotated_ball_center.distance_squared(closest_point_local);
 
-        // Calculate penetration depth
-        let penetration_depth = ball_radius - dist;
+    if distance_sq < ball.radius * ball.radius {
+        let distance = distance_sq.sqrt();
+        let penetration_depth = ball.radius - distance;
+        let normal_world = vec2(
+            normal_local.x * angle.cos() - normal_local.y * angle.sin(),
+            normal_local.x * angle.sin() + normal_local.y * angle.cos(),
+        );
 
-        // Calculate normalized collision normal
-        let normal_x = if dist == 0.0 { 1.0 } else { dx / dist }; // Avoid division by zero
-        let normal_y = if dist == 0.0 { 0.0 } else { dy / dist }; // Avoid division by zero
+        ball.position += normal_world * penetration_depth;
 
-        // Positional correction: move ball out of the wall
-        ball.position.x += normal_x * penetration_depth;
-        ball.position.y += normal_y * penetration_depth;
+        let restitution = 1.0;
+        let closing_vel = ball.velocity;
+        let vel_along_normal = closing_vel.dot(normal_world);
 
-        // Velocity reflection
-        let vel_dot_n = ball.velocity.x * normal_x + ball.velocity.y * normal_y;
-
-        if vel_dot_n < 0.0 {
-            ball.velocity.x -= (2.0) * vel_dot_n * normal_x;
-            ball.velocity.y -= (2.0) * vel_dot_n * normal_y;
+        if vel_along_normal < 0.0 {
+            let j = -(1.0 + restitution) * vel_along_normal;
+            let impulse = j * normal_world;
+            ball.velocity += impulse;
         }
     }
 }
