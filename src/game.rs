@@ -1,20 +1,27 @@
 use crate::balls::Ball;
+use crate::player::{Player,BULLET_LENGTH};
 use crate::utils::{Entity, HasBounds, SpatialGrid, ball_rect_collision};
 use crate::walls::Wall;
 use macroquad::prelude::*;
 
+
+
 pub struct Game {
     pub walls: Vec<Wall>,
     pub balls: Vec<Ball>,
+    pub player: Player,
     pub grid: SpatialGrid,
+    pub bullet_texture: Texture2D
 }
 
 impl Game {
-    pub fn new(cell_size: f32) -> Self {
+    pub fn new(cell_size: f32, position: Vec2, texture:Texture2D,bullet_texture: Texture2D) -> Self {
         Self {
             walls: Vec::new(),
             balls: Vec::new(),
             grid: SpatialGrid::new(cell_size),
+            player: Player::new(position, texture),
+            bullet_texture,
         }
     }
 
@@ -47,6 +54,25 @@ impl Game {
                 }
             }
         }
+        
+        let old_player_pos = self.player.position;
+        self.player.update(dt);
+        let player_rect = Rect::new(self.player.position.x - 25.0, self.player.position.y - 25.0, 50.0, 50.0);
+
+        for wall in self.walls.iter(){
+            if player_rect.intersect(wall.rect).is_some(){
+                self.player.position = old_player_pos;
+            }
+            for bullet in self.player.bullets.iter_mut(){
+                let bullet_rect = Rect::new(bullet.centre.x, bullet.centre.y, BULLET_LENGTH, 5.0);
+                    if bullet_rect.intersect(wall.rect).is_some(){
+                        bullet.alive = false;
+                    }
+            }
+        }
+        
+    
+        
     }
 
     pub fn draw(&self) {
@@ -57,6 +83,7 @@ impl Game {
         for wall in self.walls.iter() {
             wall.draw();
         }
+        self.player.draw();
     }
 
     pub fn spawn_wall(

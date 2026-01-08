@@ -1,63 +1,51 @@
+const FIRE_RATE:f32 = 0.15;
 use macroquad::prelude::*;
-
 mod balls;
-mod utils;
-mod walls; // or whatever you named the module with collision code
-
-use balls::Ball;
-use utils::SpatialGrid;
-use walls::Wall;
+mod player;
 
 mod game;
 use game::Game;
 
-mod rotatingroom;
+mod utils;
+mod walls;
+#[macroquad::main("new game")]
 
-use crate::utils::ball_rect_collision;
-
-use crate::rotatingroom::RotatingRoom;
-
-#[macroquad::main("a")]
 async fn main() {
-    let mut game = Game::new(10.0);
-    let mut room = RotatingRoom::new(
-        &mut game,
-        vec2(400.0, 300.0),
-        200.0,
-        8,
-        10.0,
-        1.0, // radians/sec
-    );
-    game.spawn_ball((room.centre.x, room.centre.y), vec2(0.0, 100.0), 10.0, true);
-    game.spawn_wall(
-        room.centre.x - 10.0,
-        room.centre.y + 10.0,
-        30.0,
-        15.0,
-        90.0,
-        Option::None,
-    );
-    let background = load_texture("bg/bg.png").await.unwrap();
+    let player_texture = load_texture("bg/player.png").await.unwrap();
+    let bullet_texture = load_texture("bg/bullet.png").await.unwrap();
+    let mut game = Game::new(10.0, vec2(100.0, 100.0), player_texture, bullet_texture);
+    let screen_w = screen_width();
+    let screen_h = screen_height();
+    game.spawn_wall(0.0, 0.0, screen_w, 10.0, 0.0, None);
+    game.spawn_wall(0.0, screen_h - 10.0, screen_w, 10.0, 0.0, None);
+    game.spawn_wall(0.0, 0.0, 10.0, screen_h, 0.0, None); // Left wall
+    game.spawn_wall(screen_w - 10.0, 0.0, 10.0, screen_h, 0.0, None);
+
+
     loop {
+        clear_background(BLACK);
+        
+        game.player.fire_cooldown -= get_frame_time(); 
+        let cooldown_ready = game.player.fire_cooldown <= 0.0;
         let dt = get_frame_time();
-        clear_background(WHITE);
-        draw_texture_ex(
-            &background,
-            0.0,
-            0.0,
-            WHITE,
-            DrawTextureParams {
-                dest_size: Some(vec2(screen_width(), screen_height())),
-                ..Default::default()
-            },
-        );
-
-        room.update(&mut game, dt);
-
+        if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) || is_key_down(KeyCode::Space) {
+            game.player.velocity.y -= 30.0;
+        }
+        if is_key_down(KeyCode::S) || is_key_down(KeyCode::Down) {
+            game.player.velocity.y += 30.0;
+        }
+        if is_key_down(KeyCode::A) || is_key_down(KeyCode::Left) {
+            game.player.velocity.x -= 30.0;
+        }
+        if is_key_down(KeyCode::D) || is_key_down(KeyCode::Right) {
+            game.player.velocity.x += 30.0;
+        }
+        if is_key_down(KeyCode::Enter) && cooldown_ready {
+            game.player.fire_bullet(game.bullet_texture.clone());
+            game.player.fire_cooldown = FIRE_RATE;
+        }
         game.update(dt);
-
         game.draw();
-
         next_frame().await;
     }
 }
