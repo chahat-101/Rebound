@@ -173,3 +173,34 @@ pub fn ball_rect_collision(ball: &mut Ball, wall: &Wall) {
         }
     }
 }
+
+pub fn random_spawn_position(player_pos: Vec2) -> Vec2 {
+    let padding = 30.0;
+    let min_distance = 100.0;
+
+    loop {
+        let edge = rand::gen_range(0, 4);
+
+        let pos = match edge {
+            // Left
+            0 => vec2(-padding, rand::gen_range(0., screen_height())),
+            // Right
+            1 => vec2(
+                screen_width() + padding,
+                rand::gen_range(0., screen_height()),
+            ),
+            // Top
+            2 => vec2(rand::gen_range(0., screen_width()), -padding),
+            // Bottom
+            _ => vec2(
+                rand::gen_range(0., screen_width()),
+                screen_height() + padding,
+            ),
+        };
+
+        // Safety check
+        if pos.distance(player_pos) > min_distance {
+            return pos;
+        }
+    }
+}

@@ -1,12 +1,14 @@
-const FIRE_RATE:f32 = 0.15;
+const FIRE_RATE: f32 = 0.15;
 use macroquad::prelude::*;
 mod balls;
-mod player;
-
+mod enemy;
+use enemy::Enemy;
 mod game;
+mod player;
 use game::Game;
 
 mod utils;
+use utils::Entity;
 mod walls;
 #[macroquad::main("new game")]
 
@@ -21,11 +23,18 @@ async fn main() {
     game.spawn_wall(0.0, 0.0, 10.0, screen_h, 0.0, None); // Left wall
     game.spawn_wall(screen_w - 10.0, 0.0, 10.0, screen_h, 0.0, None);
 
+    let enemy_texture = load_texture("bg/enemy.png").await.unwrap();
+
+    let mut enemy = Enemy::new(
+        vec2(screen_w / 2.0, screen_h / 2.0),
+        enemy_texture.clone(),
+        vec2(0.0, 0.0),
+    );
 
     loop {
         clear_background(BLACK);
-        
-        game.player.fire_cooldown -= get_frame_time(); 
+
+        game.player.fire_cooldown -= get_frame_time();
         let cooldown_ready = game.player.fire_cooldown <= 0.0;
         let dt = get_frame_time();
         if is_key_down(KeyCode::W) || is_key_down(KeyCode::Up) || is_key_down(KeyCode::Space) {
@@ -45,6 +54,8 @@ async fn main() {
             game.player.fire_cooldown = FIRE_RATE;
         }
         game.update(dt);
+        enemy.update(dt);
+        enemy.draw();
         game.draw();
         next_frame().await;
     }
